@@ -2,26 +2,6 @@
 
 This project builds a data pipeline using Apache Airflow to ingest, process, and load weather data from the [OpenWeather API](https://openweathermap.org/api) into a PostgreSQL database hosted in Docker. The pipeline automates the extraction of weather data, processes the data, and stores it in a well-structured PostgreSQL database for further analysis or reporting.
 
-## Project Structure
-
-```bash
-weather-data-pipeline/
-│
-├── dags/
-│   └── weather_data_pipeline.py        # Airflow DAG definition
-    │
-    ├── src/
-    │   ├── config.py                       # Configuration file for DB connection details
-    │   ├── fetch_weather_data.py           # Script to fetch data from OpenWeather API
-    │   ├── loading/
-    │   │   ├── insert_dim_condition.py     # Script to insert data into dim_weather_condition
-│   │       └── insert_dim_location.py      # Script to insert data into dim_location
-│   └── process_and_load_weather_data.py # Script to process and load data into fact_weather
-│
-├── docker-compose.yaml                 # Docker Compose file to set up PostgreSQL in Docker
-└── README.md                           # Project description file
-```
-
 # Features
 
 - **API Integration**: Weather data is fetched from the OpenWeather API for various cities.
