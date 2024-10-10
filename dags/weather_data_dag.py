@@ -54,7 +54,6 @@ create_fact_weather_table = PostgresOperator(
     postgres_conn_id='my_local_postgres',  # Replace with your connection ID
     sql="""
         CREATE TABLE IF NOT EXISTS fact_weather (
-            weather_id SERIAL PRIMARY KEY,
             city_id INT REFERENCES dim_location(city_id),
             weather_condition_id INT REFERENCES dim_weather_condition(weather_condition_id),
             timestamp TIMESTAMP,
@@ -64,15 +63,13 @@ create_fact_weather_table = PostgresOperator(
             feels_like FLOAT,
             pressure INT,
             humidity INT,
-            dew_point FLOAT,
             clouds INT,
             uvi FLOAT,
             visibility INT,
             wind_speed FLOAT,
             wind_gust FLOAT,
             wind_deg INT,
-            rain_1h FLOAT,
-            snow_1h FLOAT
+            PRIMARY KEY (city_id, timestamp)
         );
     """,
     dag=dag,
@@ -91,47 +88,6 @@ process_weather_task = PythonOperator(
     dag=dag,
 )
 
-# insert_dim_weather_condition = PostgresOperator(
-#     task_id='insert_dim_weather_condition',
-#     postgres_conn_id='my_local_postgres',  # Replace with your connection ID
-#     sql="""
-#         INSERT INTO dim_weather_condition (weather_condition_id, condition_main, condition_description)
-#         VALUES (%s, %s, %s)
-#         ON CONFLICT (weather_condition_id) DO NOTHING;
-#     """,
-#     parameters="{{ task_instance.xcom_pull(task_ids='process_and_load_weather_data', key='dim_weather_condition_values') }}",  # Adjust task ID as necessary
-#     dag=dag,
-# )
-
-# insert_dim_location = PostgresOperator(
-#     task_id='insert_dim_location',
-#     postgres_conn_id='my_local_postgres',  # Replace with your connection ID
-#     sql="""
-#         INSERT INTO dim_location (city_id, city_name, country_code, lat, lon, timezone, timezone_offset)
-#         VALUES (%s, %s, %s, %s, %s, %s, %s)
-#         ON CONFLICT (city_id) DO NOTHING;
-#     """,
-#     parameters="{{ task_instance.xcom_pull(task_ids='process_and_load_weather_data', key='dim_location_values') }}",  # Adjust task ID as necessary
-#     dag=dag,
-# )
-
-# insert_fact_weather = PostgresOperator(
-#     task_id='insert_fact_weather',
-#     postgres_conn_id='my_local_postgres',  # Replace with your connection ID
-#     sql="""
-#         INSERT INTO fact_weather (
-#             city_id, weather_condition_id, timestamp, sunrise, sunset,
-#             temp, feels_like, pressure, humidity, dew_point,
-#             clouds, visibility, wind_speed, wind_gust, wind_deg
-#         )
-#         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
-#     """,
-#     parameters="{{ task_instance.xcom_pull(task_ids='process_and_load_weather_data', key='fact_weather_values') }}",
-#     dag=dag,
-# )
-
 # Set task dependencies
 [create_dim_location_table, create_dim_weather_condition_table,
     create_fact_weather_table] >> fetch_weather_task >> process_weather_task
-# >> [
-#     insert_dim_location, insert_dim_weather_condition, insert_fact_weather]

@@ -1,7 +1,7 @@
 import psycopg2
-from src.loading.insert_dim_condition import insert_dim_weather_condition
-from src.loading.insert_dim_location import insert_dim_location
-from src.create_schema import create_schema
+from src.insertion.insert_dim_condition import insert_dim_weather_condition
+from src.insertion.insert_dim_location import insert_dim_location
+from src.insertion.insert_fact_weather import insert_fact_weather
 from datetime import datetime
 from src.config import DB_HOST, DB_NAME, DB_PASSWORD, DB_PORT, DB_USER
 
@@ -17,8 +17,6 @@ def process_and_load_weather_data(**kwargs):
             user=DB_USER,
             password=DB_PASSWORD
         )
-
-        # create_schema(conn)
 
         cur = conn.cursor()
 
@@ -45,32 +43,36 @@ def process_and_load_weather_data(**kwargs):
         insert_dim_weather_condition(
             cur, condition_id, condition_main, condition_description)
 
-        # Insert into fact_weather
-        cur.execute("""
-            INSERT INTO fact_weather (
-                city_id, weather_condition_id, timestamp, sunrise, sunset, temp, feels_like, 
-                pressure, humidity, clouds, visibility, wind_speed, wind_gust, wind_deg
-            )
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-        """, (
-            city_id,
-            condition_id,
-            datetime.fromtimestamp(data['dt']),
-            datetime.fromtimestamp(
-                data['sys']['sunrise']),
-            datetime.fromtimestamp(
-                data['sys']['sunset']),
-            data['main']['temp'],
-            data['main']['feels_like'],
-            data['main']['pressure'],
-            data['main']['humidity'],
-            # data['main']['dew_point'],
-            data['clouds']['all'],
-            data['visibility'],
-            data['wind']['speed'],
-            data['wind'].get('gust', None),
-            data['wind']['deg']
-        ))
+        # Extract weather condition and insert into dim_weather_condition
+        weather_condition = data['weather'][0]
+        condition_id = weather_condition['id']
+        condition_main = weather_condition['main']
+        condition_description = weather_condition['description']
+
+        insert_dim_weather_condition(
+            cur, condition_id, condition_main, condition_description)
+
+        # Extract fact weather data for fact_weather table
+        timestamp = datetime.utcfromtimestamp(data['dt'])
+        sunrise = datetime.utcfromtimestamp(data['sys']['sunrise'])
+        sunset = datetime.utcfromtimestamp(data['sys']['sunset'])
+        temp = data['main']['temp']
+        feels_like = data['main']['feels_like']
+        pressure = data['main']['pressure']
+        humidity = data['main']['humidity']
+        clouds = data['clouds']['all']
+        visibility = data['visibility']
+        wind_speed = data['wind']['speed']
+        wind_gust = data['wind'].get('gust', None)
+        wind_deg = data['wind']['deg']
+
+        # Prepare fact_weather data
+        insert_fact_weather(
+            cur, city_id, condition_id, timestamp, sunrise, sunset,
+            temp, feels_like, pressure, humidity,
+            clouds, visibility, wind_speed, wind_gust, wind_deg
+        )
+
         conn.commit()
         cur.close()
         conn.close()
