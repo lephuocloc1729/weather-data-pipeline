@@ -1,0 +1,2 @@
+from src.loading.insert_dim_condition import insert_dim_weather_condition
+from src.loading.insert_dim_location import insert_dim_location

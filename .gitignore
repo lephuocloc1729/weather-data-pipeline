@@ -1,0 +1,39 @@
+# Environment variables
+.env
+.env.local
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Virtual environments
+venv/
+env/
+
+# Logs and temporary files
+*.log
+*.tmp
+*.temp
+logs/
+
+# Data files
+data/
+*.csv
+*.json
+*.parquet
+
+# Jupyter Notebooks
+.ipynb_checkpoints/
+*.ipynb
+
+# Compiled code
+*.class
+*.o
+*.exe
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Backup files
+*.bak
